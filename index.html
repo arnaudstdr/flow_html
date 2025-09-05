@@ -122,8 +122,12 @@
             breakSeconds = Math.floor(workedSeconds / 5);
 
             // Ajouter à l'historique
-            const taskName = prompt("Nom de la tache effectuee :", `Tache ${sessionCount}`);
+            const taskName = prompt("Nom de la tâche effectuée :", `Tâche ${sessionCount}`);
             if (taskName) {
+                // Charger l'historique existant
+                let history = JSON.parse(localStorage.getItem('flowmodoroHistory') || '[]');
+
+                // Ajouter la nouvelle session
                 const session = {
                     date: new Date().toLocaleString(),
                     task: taskName,
@@ -131,6 +135,11 @@
                     breakDuration: formatTime(breakSeconds)
                 };
                 history.unshift(session); // Ajouter au début de la liste
+
+                // Nettoyer les anciennes sessions (30 jours max)
+                cleanOldHistory(30);
+
+                // Sauvegarder l'historique mis à jour
                 localStorage.setItem('flowmodoroHistory', JSON.stringify(history));
                 renderHistory();
             }
@@ -144,6 +153,22 @@
             // Décompte de la pause
             startBreakCountdown();
         }
+
+        // Fonction cleanOldHistory à ajouter (si ce n'est pas déjà fait)
+        function cleanOldHistory(maxDays = 30) {
+            const now = new Date();
+            let history = JSON.parse(localStorage.getItem('flowmodoroHistory') || '[]');
+
+            history = history.filter(item => {
+                const itemDate = new Date(item.date);
+                const diffDays = (now - itemDate) / (1000 * 60 * 60 * 24);
+                return diffDays <= maxDays;
+            });
+
+            // Mettre à jour l'historique global
+            window.history = history;
+        }
+
 
         function startBreakCountdown() {
             let currentBreakSeconds = breakSeconds;
