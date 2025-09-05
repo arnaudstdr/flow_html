@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flowmodoro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            margin: 8px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startBtn {
+            background-color: #007AFF;
+            color: white;
+        }
+        #stopBtn {
+            background-color: #FF3B30;
+            color: white;
+        }
+        #resetBtn, #exportBtn {
+            background-color: #34C759;
+            color: white;
+            display: none;
+        }
+        #timer {
+            font-size: 48px;
+            margin: 20px;
+            font-weight: bold;
+        }
+        #breakDisplay {
+            font-size: 36px;
+            margin: 20px;
+            color: #007AFF;
+        }
+        #sessionCounter {
+            font-size: 24px;
+            margin: 15px;
+            color: #888;
+        }
+        #history {
+            margin-top: 30px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flowmodoro</h1>
+    <div id="sessionCounter">Sessions aujourd'hui : 0</div>
+    <div id="timer">00:00:00</div>
+    <div id="breakDisplay" class="hidden"></div>
+    <button id="startBtn">Start</button>
+    <button id="stopBtn" disabled>Stop</button>
+    <button id="resetBtn">Nouvelle session</button>
+    <button id="exportBtn">Exporter en CSV</button>
+
+    <h2>Historique</h2>
+    <div id="history"></div>
+
+    <script>
+        let startTime;
+        let timerInterval;
+        let breakInterval;
+        let breakSeconds = 0;
+        let sessionCount = 0;
+        let history = [];
+
+        // Charger les données depuis localStorage au démarrage
+        if (localStorage.getItem('flowmodoroSessionCount') && localStorage.getItem('flowmodoroSessionDate') === new Date().toDateString()) {
+            sessionCount = parseInt(localStorage.getItem('flowmodoroSessionCount'));
+            document.getElementById('sessionCounter').innerText = `Sessions aujourd'hui : ${sessionCount}`;
+        }
+        if (localStorage.getItem('flowmodoroHistory')) {
+            history = JSON.parse(localStorage.getItem('flowmodoroHistory'));
+            renderHistory();
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startWork);
+        document.getElementById('stopBtn').addEventListener('click', stopWork);
+        document.getElementById('resetBtn').addEventListener('click', resetApp);
+        document.getElementById('exportBtn').addEventListener('click', exportToCSV);
+
+        function startWork() {
+            startTime = Date.now();
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('resetBtn').style.display = 'none';
+            document.getElementById('breakDisplay').classList.add('hidden');
+            timerInterval = setInterval(updateTimer, 1000);
+
+            // Incrémenter le compteur de sessions
+            sessionCount++;
+            document.getElementById('sessionCounter').innerText = `Sessions aujourd'hui : ${sessionCount}`;
+            localStorage.setItem('flowmodoroSessionCount', sessionCount);
+            localStorage.setItem('flowmodoroSessionDate', new Date().toDateString());
+        }
+
+        function stopWork() {
+            clearInterval(timerInterval);
+            const workedMs = Date.now() - startTime;
+            const workedSeconds = Math.floor(workedMs / 1000);
+            breakSeconds = Math.floor(workedSeconds / 5);
+
+            // Ajouter à l'historique
+            const taskName = prompt("Nom de la tache effectuee :", `Tache ${sessionCount}`);
+            if (taskName) {
+                const session = {
+                    date: new Date().toLocaleString(),
+                    task: taskName,
+                    workDuration: formatTime(workedSeconds),
+                    breakDuration: formatTime(breakSeconds)
+                };
+                history.unshift(session); // Ajouter au début de la liste
+                localStorage.setItem('flowmodoroHistory', JSON.stringify(history));
+                renderHistory();
+            }
+
+            document.getElementById('breakDisplay').innerText = formatTime(breakSeconds);
+            document.getElementById('breakDisplay').classList.remove('hidden');
+            document.getElementById('resetBtn').style.display = 'inline-block';
+            document.getElementById('exportBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').disabled = true;
+
+            // Décompte de la pause
+            startBreakCountdown();
+        }
+
+        function startBreakCountdown() {
+            let currentBreakSeconds = breakSeconds;
+            document.getElementById('breakDisplay').innerText = formatTime(currentBreakSeconds);
+            breakInterval = setInterval(() => {
+                currentBreakSeconds--;
+                document.getElementById('breakDisplay').innerText = formatTime(currentBreakSeconds);
+                if (currentBreakSeconds <= 0) {
+                    clearInterval(breakInterval);
+                    document.getElementById('breakDisplay').innerText = "Pause terminee !";
+                }
+            }, 1000);
+        }
+
+        function resetApp() {
+            clearInterval(timerInterval);
+            clearInterval(breakInterval);
+            document.getElementById('timer').innerText = "00:00:00";
+            document.getElementById('breakDisplay').classList.add('hidden');
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('resetBtn').style.display = 'none';
+        }
+
+        function renderHistory() {
+            const historyDiv = document.getElementById('history');
+            historyDiv.innerHTML = history.map(item =>
+                `<div class="history-item">
+                    <strong>${item.date}</strong><br>
+                    Tache: ${item.task}<br>
+                    Travail: ${item.workDuration} | Pause: ${item.breakDuration}
+                </div>`
+            ).join('');
+        }
+
+        function exportToCSV() {
+            if (history.length === 0) {
+                alert("Aucune session à exporter.");
+                return;
+            }
+
+            // Créer le contenu CSV
+            let csvContent = "data:text/csv;charset=utf-8,Date,Tache,Duree travail,Duree pause\n";
+            history.forEach(item => {
+                const row = `"${item.date}","${item.task}","${item.workDuration}","${item.breakDuration}"`;
+                csvContent += row + "\n";
+            });
+
+            // Créer un lien de téléchargement
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "flowmodoro_history.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function updateTimer() {
+            const elapsedMs = Date.now() - startTime;
+            const elapsedSeconds = Math.floor(elapsedMs / 1000);
+            document.getElementById('timer').innerText = formatTime(elapsedSeconds);
+        }
+
+        function formatTime(seconds) {
+            const hrs = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            return `${hrs}:${mins}:${secs}`;
+        }
+    </script>
+</body>
+</html>
