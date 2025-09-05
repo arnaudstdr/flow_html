@@ -178,9 +178,7 @@
                 document.getElementById('breakDisplay').innerText = formatTime(currentBreakSeconds);
                 if (currentBreakSeconds <= 0) {
                     clearInterval(breakInterval);
-                    document.getElementById('breakDisplay').innerText = "Pause terminée !";
-                    // Affiche un popup natif
-                    alert("⏰ Pause terminée ! Retour au travail.");
+                    document.getElementById('breakDisplay').innerText = "Pause terminee !";
                 }
             }, 1000);
         }
