@@ -1,8 +1,8 @@
 # Flowmodoro
 
-![GitHub last commit](https://img.shields.io/github/last-commit/arnaudstadler/flowmodo?style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/arnaudstadler/flowmodo?style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues/arnaudstadler/flowmodo?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/arnaudstdr/flow_html?style=flat-square)
+![GitHub repo size](https://img.shields.io/github/repo-size/arnaudstdr/flow_html?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/arnaudstdr/flow_html?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 Flowmodoro est une application web simple de gestion du temps inspirée de la méthode Pomodoro, conçue pour améliorer la productivité tout en favorisant des pauses régulières.
