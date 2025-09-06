@@ -141,7 +141,7 @@
             const taskName = prompt("Nom de la tâche effectuée :", `Tâche ${sessionCount}`);
             if (taskName) {
                 // Charger l'historique existant
-                let history = JSON.parse(localStorage.getItem('flowmodoroHistory') || '[]');
+                history = JSON.parse(localStorage.getItem('flowmodoroHistory') || '[]');
 
                 // Ajouter la nouvelle session
                 const session = {
